@@ -3,7 +3,7 @@ from pathlib import Path
 
 import typer
 
-from mop_divpo.data.acquire import prepare_local_source
+from mop_divpo.data.acquire import collect_and_prepare_source, collect_source_to_raw, prepare_local_source
 from mop_divpo.data.prepare import write_sample_sft_files
 from mop_divpo.data.sources import list_dataset_sources
 from mop_divpo.inference.generate import dry_run_generate
@@ -33,6 +33,22 @@ def prepare_source(
     limit: int | None = typer.Option(None),
 ):
     paths = prepare_local_source(source_name, raw_path, output_dir, limit)
+    for path in paths:
+        typer.echo(str(path))
+
+
+@app.command("collect-source")
+def collect_source(
+    source_name: str,
+    raw_dir: Path = typer.Option(Path("data/raw")),
+    output_dir: Path = typer.Option(Path("data/processed/sft")),
+    limit: int = typer.Option(50),
+    prepare: bool = typer.Option(True),
+):
+    if prepare:
+        paths = collect_and_prepare_source(source_name, raw_dir, output_dir, limit)
+    else:
+        paths = [collect_source_to_raw(source_name, raw_dir, limit)]
     for path in paths:
         typer.echo(str(path))
 

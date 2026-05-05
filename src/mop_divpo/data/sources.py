@@ -16,6 +16,7 @@ class DatasetSource:
     split: str = "train"
     config_name: str | None = None
     url: str | None = None
+    hf_mirror_dataset_id: str | None = None
 
     def __post_init__(self) -> None:
         for persona in self.personas:
@@ -30,6 +31,7 @@ DATASET_SOURCES: dict[str, DatasetSource] = {
         personas=("contrarian",),
         description="Conversations Gone Awry CMV comments for assumption-challenging and dissent patterns.",
         url="https://convokit.cornell.edu/documentation/awry_cmv.html",
+        hf_mirror_dataset_id="mc-ai/conversations-gone-awry-cmv",
     ),
     "arxiv_abstracts": DatasetSource(
         name="arxiv_abstracts",
@@ -56,6 +58,7 @@ DATASET_SOURCES: dict[str, DatasetSource] = {
         personas=("minimalist",),
         description="Project Gutenberg public-domain text for constraint-driven minimalist writing examples.",
         split="train",
+        config_name="paragraphs",
         url="https://huggingface.co/datasets/zkeown/gutenberg-corpus",
     ),
 }
