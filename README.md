@@ -36,6 +36,32 @@ python3 -m venv .venv
 mop-divpo prepare-data --output-dir data/processed/sft
 ```
 
+## Dataset-First Workflow
+
+List the dataset sources anchored to the proposal:
+
+```bash
+PYTHONPATH=src python3 -m mop_divpo.cli list-sources
+```
+
+Prepare normalized SFT files from a local raw JSONL export:
+
+```bash
+PYTHONPATH=src python3 -m mop_divpo.cli prepare-source arxiv_abstracts \
+  --raw-path data/raw/arxiv_sample.jsonl \
+  --output-dir data/processed/sft \
+  --limit 50
+```
+
+The current dataset layer supports the proposal anchors:
+
+| Source | Acquisition | Dataset id |
+| --- | --- | --- |
+| `cga_cmv` | ConvoKit | `conversations-gone-awry-cmv-corpus` |
+| `arxiv_abstracts` | Hugging Face | `gfissore/arxiv-abstracts-2021` |
+| `stackexchange_qa` | Hugging Face | `PrimeIntellect/stackexchange-question-answering` |
+| `gutenberg` | Hugging Face | `zkeown/gutenberg-corpus` |
+
 ## Dry-Run Inference
 
 ```bash
