@@ -1,0 +1,26 @@
+model:
+  base_model: Qwen/Qwen2.5-0.5B-Instruct
+  embedding_model: sentence-transformers/all-MiniLM-L6-v2
+
+data:
+  raw_dir: data/raw
+  processed_dir: data/processed
+  samples_per_persona: 50
+
+training:
+  output_dir: outputs/adapters
+  max_steps: 10
+  learning_rate: 0.0002
+  dry_run: true
+
+divpo:
+  candidates_per_prompt: 4
+  min_quality: 0.35
+  rarity_weight: 0.6
+  quality_weight: 0.4
+
+routing:
+  top_k: 2
+
+evaluation:
+  output_dir: outputs/evaluation
