@@ -24,3 +24,7 @@ def infer(
     personas = persona or ["contrarian", "cross_domain_analogist", "systems_thinker", "minimalist"]
     outputs = dry_run_generate(prompt, personas)
     typer.echo(json.dumps(outputs, indent=2))
+
+
+if __name__ == "__main__":
+    app()
