@@ -29,6 +29,6 @@ def test_dataset_source_rejects_unknown_persona():
             name="bad",
             acquisition="local_jsonl",
             dataset_id="local",
-            personas=("optimist",),
+            personas=("optimist",),  # type: ignore[arg-type]
             description="bad persona",
         )

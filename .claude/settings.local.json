@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest tests/ -x --tb=short)",
+      "Bash(python -m pytest tests/ --tb=short)",
+      "Bash(pip show *)",
+      "Bash(pip install *)",
+      "Bash(python -c \"import mop_divpo; print\\(mop_divpo.__file__\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(timeout 15 python -c ' *)",
+      "Bash(python -m pytest tests/test_dataset_acquire.py tests/test_data_prepare.py --tb=short)",
+      "Bash(python -c \"import google.protobuf; print\\(google.protobuf.__version__\\); from google.protobuf import runtime_version; print\\('runtime_version OK'\\)\")",
+      "Bash(huggingface-cli whoami *)",
+      "Bash(python -c \"from mop_divpo.training.train_sft import train; print\\('import OK'\\)\")",
+      "Bash(python -m pytest tests/ --tb=short -q)",
+      "Bash(.venv/bin/python -c \"from mop_divpo.training.train_sft import train; print\\('import OK'\\)\")",
+      "Bash(.venv/bin/python -m pytest tests/ --tb=short -q)",
+      "Bash(.venv/bin/python -c ' *)",
+      "Bash(.venv/bin/python -c \"import transformers; print\\(transformers.__version__\\)\")",
+      "Bash(.venv/bin/python -m pytest tests/ -q)",
+      "Bash(.venv/bin/python -m mop_divpo.training.push_data --data-dir data/processed/sft)"
+    ]
+  }
+}

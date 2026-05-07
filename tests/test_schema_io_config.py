@@ -19,7 +19,7 @@ def test_sft_record_validates_persona():
     assert record.persona == "contrarian"
 
     with pytest.raises(ValidationError):
-        SFTRecord(id="bad", persona="optimist", source="unit", prompt="p", response="r")
+        SFTRecord(id="bad", persona="optimist", source="unit", prompt="p", response="r")  # type: ignore[arg-type]
 
 
 def test_candidate_and_pair_records_have_dpo_fields():

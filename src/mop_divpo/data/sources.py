@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 from mop_divpo.personas import PersonaId, validate_persona
 
@@ -72,7 +72,7 @@ def get_dataset_source(name: str) -> DatasetSource:
         raise ValueError(f"Unknown dataset source '{name}'. Expected one of: {allowed}") from exc
 
 
-def list_dataset_sources() -> list[dict[str, object]]:
+def list_dataset_sources() -> list[dict[str, Any]]:
     return [
         {
             "name": source.name,

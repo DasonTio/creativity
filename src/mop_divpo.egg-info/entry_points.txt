@@ -1,0 +1,2 @@
+[console_scripts]
+mop-divpo = mop_divpo.cli:app
