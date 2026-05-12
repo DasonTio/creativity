@@ -27,6 +27,7 @@ class CandidateRecord(BaseModel):
     quality_score: float = 0.0
     rarity_score: float = 0.0
     metadata: dict[str, Any] = Field(default_factory=dict)
+    structured: dict[str, str] | None = Field(default=None)
 
     @field_validator("persona")
     @classmethod
