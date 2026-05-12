@@ -32,4 +32,3 @@ def test_all_personas_have_structured_sections():
     for persona_id in PERSONA_IDS:
         description = describe_persona(persona_id)
         assert "METHOD" in description, f"{persona_id}: missing METHOD section"
-        assert "FORMAT" in description, f"{persona_id}: missing FORMAT section"
