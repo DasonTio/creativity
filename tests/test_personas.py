@@ -26,3 +26,10 @@ def test_validate_persona_rejects_unknown_value():
 def test_persona_type_accepts_canonical_ids():
     value: PersonaId = "minimalist"
     assert validate_persona(value) == "minimalist"
+
+
+def test_all_personas_have_structured_sections():
+    for persona_id in PERSONA_IDS:
+        description = describe_persona(persona_id)
+        assert "METHOD" in description, f"{persona_id}: missing METHOD section"
+        assert "FORMAT" in description, f"{persona_id}: missing FORMAT section"
