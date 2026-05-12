@@ -18,7 +18,11 @@
       "Bash(.venv/bin/python -c ' *)",
       "Bash(.venv/bin/python -c \"import transformers; print\\(transformers.__version__\\)\")",
       "Bash(.venv/bin/python -m pytest tests/ -q)",
-      "Bash(.venv/bin/python -m mop_divpo.training.push_data --data-dir data/processed/sft)"
+      "Bash(.venv/bin/python -m mop_divpo.training.push_data --data-dir data/processed/sft)",
+      "Bash(git remote *)",
+      "Bash(git push *)",
+      "Bash(git fetch *)",
+      "Bash(git pull *)"
     ]
   }
 }
