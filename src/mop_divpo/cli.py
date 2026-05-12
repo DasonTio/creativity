@@ -121,5 +121,38 @@ def infer(
     typer.echo(json.dumps(outputs, indent=2))
 
 
+@app.command("chat")
+def chat(
+    persona: str = typer.Option("contrarian", "--persona", help="Persona to use as writing partner"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Skip model loading; use stub responses"),
+    max_new_tokens: int = typer.Option(256, "--max-new-tokens"),
+):
+    """Start a multi-turn co-author session with a single persona."""
+    from mop_divpo.inference.session import PersonaSession, dry_run_generate_turn, generate_turn
+    from mop_divpo.personas import validate_persona
+
+    try:
+        validated = validate_persona(persona)
+    except ValueError as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(1)
+
+    session = PersonaSession(persona=validated)
+    fn = dry_run_generate_turn if dry_run else generate_turn
+
+    typer.echo(f"[co-author:{validated}] Type your message. Ctrl+C or empty line to quit.\n")
+    while True:
+        try:
+            user_input = typer.prompt("You")
+        except (KeyboardInterrupt, EOFError):
+            typer.echo("\nSession ended.")
+            break
+        if not user_input.strip():
+            typer.echo("Session ended.")
+            break
+        response, session = fn(session, user_input, max_new_tokens=max_new_tokens)
+        typer.echo(f"\n[{validated}] {response}\n")
+
+
 if __name__ == "__main__":
     app()
