@@ -24,3 +24,9 @@ routing:
 
 evaluation:
   output_dir: outputs/evaluation
+
+retrieval:
+  corpus_embeddings_path: data/processed/corpus_embeddings.npy
+  corpus_docs_path: data/processed/corpus_docs.jsonl
+  top_k: 3
+  enabled: true
