@@ -24,6 +24,10 @@ def _normalize(records: list[dict]) -> list[dict]:
             "source": str(r.get("source", "")),
             "prompt": str(r.get("prompt", "")),
             "response": str(r.get("response", "")),
+            "operation": str(r.get("operation", "")),
+            "brief": r.get("brief", {}),
+            "card": r.get("card", {}),
+            "messages": r.get("messages", []),
             "metadata": json.dumps(r.get("metadata", {})),
         })
     return out

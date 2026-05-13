@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 _MODEL_ID = "Qwen/Qwen2.5-0.5B-Instruct"
 _tokenizer: Any = None
 _model: Any = None
+_adapter_models: dict[str, tuple[Any, Any]] = {}
 
 
 def _device() -> torch.device:
@@ -39,17 +40,44 @@ def _load() -> tuple[Any, Any]:
     return _tokenizer, _model
 
 
+def adapter_repo_id(prefix: str, persona: str, stage: str = "sft") -> str:
+    validated = validate_persona(persona)
+    clean_prefix = prefix.rstrip("/")
+    return f"{clean_prefix}-{validated}-{stage}"
+
+
+def _load_with_adapter(adapter_id: str) -> tuple[Any, Any]:
+    if adapter_id not in _adapter_models:
+        from peft import PeftModel
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+
+        tokenizer = AutoTokenizer.from_pretrained(_MODEL_ID)
+        base_model = AutoModelForCausalLM.from_pretrained(
+            _MODEL_ID,
+            torch_dtype=torch.float16,
+        ).to(_device())
+        model = PeftModel.from_pretrained(base_model, adapter_id)
+        model.eval()
+        _adapter_models[adapter_id] = (tokenizer, model)
+    return _adapter_models[adapter_id]
+
+
 def generate(
     prompt: str,
     personas: list[str],
     max_new_tokens: int = 256,
     retriever: CorpusRetriever | None = None,
+    adapter_prefix: str | None = None,
+    adapter_stage: str = "sft",
 ) -> list[dict[str, str | dict]]:
-    tokenizer, model = _load()
-    device = next(model.parameters()).device
     outputs = []
     for persona_value in personas:
         persona = validate_persona(persona_value)
+        if adapter_prefix is not None:
+            tokenizer, model = _load_with_adapter(adapter_repo_id(adapter_prefix, persona, adapter_stage))
+        else:
+            tokenizer, model = _load()
+        device = next(model.parameters()).device
 
         # Build system content
         system_content = describe_persona(persona)

@@ -4,12 +4,9 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+from typing import Any
 
 import torch
-from datasets import Dataset
-from peft import LoraConfig, TaskType
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from trl import SFTConfig, SFTTrainer
 
 from mop_divpo.io import read_jsonl
 from mop_divpo.personas import describe_persona, validate_persona
@@ -27,11 +24,19 @@ def _device() -> str:
 
 def _format_records(
     records: list[dict],
-    tokenizer: AutoTokenizer,
+    tokenizer: Any,
     persona_description: str,
 ) -> list[dict[str, str]]:
     formatted = []
     for record in records:
+        messages = record.get("messages")
+        if isinstance(messages, list) and messages:
+            text = tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=False
+            )
+            formatted.append({"text": text})
+            continue
+
         prompt = str(record.get("prompt", "")).strip()
         response = str(record.get("response", "")).strip()
         if not prompt or not response:
@@ -62,6 +67,11 @@ def train(
     lora_dropout: float = 0.05,
     push_to_hub: bool = False,
 ) -> None:
+    from datasets import Dataset
+    from peft import LoraConfig, TaskType
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+    from trl import SFTConfig, SFTTrainer
+
     persona = validate_persona(persona_name)
     persona_description = describe_persona(persona)
     device = _device()

@@ -68,12 +68,20 @@ Persona Gate  (MLP Classifier)
 
 ## Datasets
 
+This repo now has two dataset tracks:
+
+- **Legacy proposal datasets**: CGA-CMV, ArXiv, StackExchange, and Gutenberg are still available as raw/source material.
+- **Co-author SFT dataset**: the current product direction uses message-format examples that teach writing-partner behavior: `diagnosis`, `idea`, `rationale`, and `next_step`.
+
 | Dataset | Acquisition | Persona Target |
 |---------|------------|---------------|
 | CGA-CMV — Reddit Conversations Gone Awry | ConvoKit | `contrarian` |
 | ArXiv Abstracts 2021 | HuggingFace | `cross_domain_analogist`, `systems_thinker` |
 | StackExchange Q&A | HuggingFace | `systems_thinker` |
 | Project Gutenberg Corpus | HuggingFace | `minimalist` |
+| Co-author seed examples | Curated local builder | all personas |
+
+> The raw proposal datasets were not deleted. The important change is that they should no longer be used directly as assistant responses for fine-tuning. Use them as source material, then convert or curate them into co-author examples.
 
 ---
 
@@ -100,6 +108,10 @@ creativity/
 │   ├── config.py            # YAML config loader
 │   ├── io.py                # JSONL read/write helpers
 │   ├── cli.py               # Typer CLI entrypoint
+│   ├── coauthor/
+│   │   ├── schema.py        # WritingBrief, IdeaCard, CoAuthorRecord
+│   │   ├── data.py          # Co-author dataset sources + seed builder
+│   │   └── ideation.py      # Structured idea-card workflow
 │   ├── data/
 │   │   ├── sources.py       # Dataset registry
 │   │   ├── acquire.py       # HuggingFace + ConvoKit acquisition
@@ -119,9 +131,11 @@ creativity/
 │   │   └── commands.py      # Training command builders
 │   └── eval/
 │       └── evaluate.py      # Evaluation runner
-├── tests/                   # 40 pytest tests — no GPU required
+├── tests/                   # pytest tests — no GPU required
 ├── configs/
 │   └── prototype.yaml       # Prototype config (dry-run defaults)
+├── notebooks/
+│   └── train_coauthor_colab.ipynb
 └── pyproject.toml
 ```
 
@@ -165,30 +179,199 @@ routing:
 
 ## Usage
 
-### CLI
+### 1. Install And Verify
 
 ```bash
-# List available dataset sources
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+
+pytest
+```
+
+### 2. Build Co-Author SFT Data
+
+The current product target is a writing partner for pre-writing. For a quick local seed set, run:
+
+```bash
+PYTHONPATH=src python3 -m mop_divpo.cli build-coauthor-data \
+  --output-dir data/processed/coauthor_sft
+```
+
+For the larger referenced dataset, ingest external sources:
+
+```bash
+PYTHONPATH=src python3 -m mop_divpo.cli ingest-coauthor-data \
+  --output-dir data/processed/coauthor_sft \
+  --limit-per-source 100
+```
+
+This creates:
+
+```text
+data/processed/coauthor_sft/contrarian.jsonl
+data/processed/coauthor_sft/cross_domain_analogist.jsonl
+data/processed/coauthor_sft/systems_thinker.jsonl
+data/processed/coauthor_sft/minimalist.jsonl
+```
+
+Each row uses chat messages:
+
+```json
+{
+  "messages": [
+    {"role": "system", "content": "persona instruction"},
+    {"role": "user", "content": "writer brief"},
+    {"role": "assistant", "content": "structured idea card"}
+  ]
+}
+```
+
+The external ingestion currently pulls:
+
+- `llm-aes/writing-prompts` for creative writer briefs
+- `ibm-research/argument_quality_ranking_30k` for argumentative thesis and quality material
+- `mc-ai/conversations-gone-awry-cmv` for contrarian/counter-position material
+
+Every generated row includes a `references` field with the source dataset, row index, URL, and source-specific identifiers when available.
+
+With `--limit-per-source 100`, the current generated dataset is:
+
+```text
+contrarian.jsonl                 360 rows
+cross_domain_analogist.jsonl     262 rows
+systems_thinker.jsonl            262 rows
+minimalist.jsonl                 262 rows
+total                           1146 rows
+```
+
+The local seed-only builder creates 64 rows per persona, 256 rows total. Use the external ingestion path for training experiments, then review/filter rows before making model-quality claims.
+
+### 3. Try The Writing-Partner Workflow
+
+```bash
+PYTHONPATH=src python3 -m mop_divpo.cli ideate \
+  --topic "AI in education" \
+  --goal "Find a sharper thesis" \
+  --persona contrarian \
+  --persona minimalist
+```
+
+Output idea cards include:
+
+- `diagnosis`
+- `idea`
+- `rationale`
+- `next_step`
+
+This is the first product-facing workflow. It gives the writer actionable pre-writing moves instead of generic paragraphs.
+
+### 4. Legacy Dataset Commands
+
+The original source dataset commands are still available for research data collection:
+
+```bash
 mop-divpo list-sources
-
-# Prepare sample SFT training files
 mop-divpo prepare-data --output-dir data/processed/sft
-
-# Collect + prepare a source from HuggingFace
 mop-divpo collect-source arxiv_abstracts --limit 100
-
-# Prepare from a local JSONL export
 mop-divpo prepare-source arxiv_abstracts \
   --raw-path data/raw/arxiv_sample.jsonl \
   --output-dir data/processed/sft \
   --limit 50
 ```
 
+Use these outputs as raw material for co-author task construction, not as direct final SFT targets.
+
 ---
 
-## Training
+## Co-Author Training
 
-Training runs in two phases per persona: SFT (supervised fine-tuning) then DPO (DivPO preference optimization).
+### Recommended Path: Google Colab
+
+Use `notebooks/train_coauthor_colab.ipynb` for GPU training. The notebook trains one LoRA adapter per persona using the revised co-author message format.
+
+Steps:
+
+1. Build the local co-author data:
+
+```bash
+PYTHONPATH=src python3 -m mop_divpo.cli build-coauthor-data \
+  --output-dir data/processed/coauthor_sft
+```
+
+2. Upload or push `data/processed/coauthor_sft/*.jsonl` to HuggingFace.
+
+The existing pusher preserves co-author fields:
+
+```bash
+PYTHONPATH=src python3 -m mop_divpo.training.push_data \
+  --data-dir data/processed/coauthor_sft \
+  --repo-id DasonTio/mop-divpo-coauthor-sft-data
+```
+
+3. Open `notebooks/train_coauthor_colab.ipynb` in Google Colab.
+4. Set Runtime to GPU.
+5. Update `HF_DATASET` and `HF_ADAPTER_PREFIX` in the notebook if needed.
+6. Run all cells.
+
+The notebook pushes adapters using this pattern:
+
+```text
+DasonTio/mop-divpo-coauthor-{persona}-sft
+```
+
+Example:
+
+```text
+DasonTio/mop-divpo-coauthor-contrarian-sft
+```
+
+### Local Training Option
+
+If your machine has enough compute, train one persona locally:
+
+```bash
+PYTHONPATH=src python3 -m mop_divpo.training.train_sft \
+  contrarian \
+  --data-path data/processed/coauthor_sft/contrarian.jsonl \
+  --output-dir outputs/adapters/coauthor_sft/contrarian \
+  --max-steps 200
+```
+
+Repeat for:
+
+```text
+cross_domain_analogist
+systems_thinker
+minimalist
+```
+
+### Inference With Co-Author Adapters
+
+The Python generation API supports adapter-backed inference:
+
+```python
+from mop_divpo.inference.generate import generate
+
+outputs = generate(
+    prompt="Topic: AI in education\nWriter goal: Find a sharper thesis",
+    personas=["contrarian"],
+    adapter_prefix="DasonTio/mop-divpo-coauthor",
+    adapter_stage="sft",
+)
+```
+
+This resolves to:
+
+```text
+DasonTio/mop-divpo-coauthor-contrarian-sft
+```
+
+---
+
+## Legacy Training
+
+The legacy proposal pipeline still supports SFT and DPO-style commands. Keep this path for comparison baselines, not as the main co-author product training path.
 
 ### Prerequisites
 
@@ -253,7 +436,7 @@ Trained adapters land in `outputs/adapters/divpo/{persona}/`.
 
 ## Inference with Trained Model
 
-The `infer` command loads `Qwen/Qwen2.5-0.5B-Instruct` from HuggingFace and injects each persona's cognitive style as a system prompt. No trained adapter loading is required for baseline inference — add adapter support via PEFT once adapters are trained.
+The `infer` command loads `Qwen/Qwen2.5-0.5B-Instruct` from HuggingFace and injects each persona's cognitive style as a system prompt. For the writing-partner product workflow, prefer `ideate` or the adapter-backed Python `generate(...)` call shown above.
 
 ### CLI
 
@@ -299,7 +482,7 @@ for out in outputs:
 pytest
 ```
 
-40 tests, all dry-run friendly — no GPU required, completes in under one second.
+The test suite is dry-run friendly and does not require a GPU.
 
 ---
 
@@ -317,7 +500,7 @@ pytest
 
 ## Status
 
-> **Prototype** — data acquisition, evaluation scaffolding, and base model inference complete. LoRA adapter training requires a dedicated venv and sufficient compute (MPS on Apple Silicon or CUDA on GPU).
+> **Prototype** — the project now includes a co-author SFT path, structured idea-card workflow, and Colab training notebook. The seed dataset must be expanded before serious model-quality claims.
 
 **Done:**
 - Dataset registry and acquisition layer
@@ -327,10 +510,14 @@ pytest
 - Persona gate (MLP routing stub)
 - Full CLI pipeline
 - Real HuggingFace inference (Qwen 0.5B, MPS/CUDA/CPU device detection)
+- Co-author schemas and seed dataset builder
+- `ideate` writing-partner CLI workflow
+- Colab notebook for co-author SFT adapter training
 
 **In progress:**
-- Per-persona LoRA adapter training (SFT + DivPO phases)
-- Adapter loading at inference time via PEFT
+- Expanding the co-author dataset beyond the current seed examples
+- Per-persona co-author LoRA adapter training
+- DivPO candidate generation and pair construction for co-author tasks
 - Reward model integration for quality scoring
 - Comparative baseline evaluation
 

@@ -4,6 +4,8 @@ from typing import Optional
 
 import typer
 
+from mop_divpo.coauthor.data import write_coauthor_sft_files, write_external_coauthor_sft_files
+from mop_divpo.coauthor.ideation import build_idea_cards
 from mop_divpo.data.acquire import collect_and_prepare_source, collect_source_to_raw, prepare_local_source
 from mop_divpo.data.prepare import write_sample_sft_files
 from mop_divpo.data.sources import list_dataset_sources
@@ -16,6 +18,32 @@ app = typer.Typer(help="MoP + DivPO prototype pipeline")
 @app.command("prepare-data")
 def prepare_data(output_dir: Path = typer.Option(Path("data/processed/sft"))):
     paths = write_sample_sft_files(output_dir)
+    for path in paths:
+        typer.echo(str(path))
+
+
+@app.command("build-coauthor-data")
+def build_coauthor_data(output_dir: Path = typer.Option(Path("data/processed/coauthor_sft"))):
+    """Build writing-partner SFT seed data as persona-specific JSONL files."""
+    paths = write_coauthor_sft_files(output_dir)
+    typer.echo(f"coauthor_sft files written: {len(paths)}")
+    for path in paths:
+        typer.echo(str(path))
+
+
+@app.command("ingest-coauthor-data")
+def ingest_coauthor_data(
+    output_dir: Path = typer.Option(Path("data/processed/coauthor_sft")),
+    limit_per_source: int = typer.Option(100, "--limit-per-source"),
+    include_seed: bool = typer.Option(True, "--include-seed/--no-include-seed"),
+):
+    """Pull external datasets and convert them into referenced co-author SFT rows."""
+    paths = write_external_coauthor_sft_files(
+        output_dir=output_dir,
+        limit_per_source=limit_per_source,
+        include_seed=include_seed,
+    )
+    typer.echo(f"external coauthor_sft files written: {len(paths)}")
     for path in paths:
         typer.echo(str(path))
 
@@ -119,6 +147,27 @@ def infer(
     else:
         outputs = generate(prompt, personas, max_new_tokens)
     typer.echo(json.dumps(outputs, indent=2))
+
+
+@app.command("ideate")
+def ideate(
+    topic: str = typer.Option(..., "--topic", help="Writing topic or rough subject"),
+    goal: str = typer.Option(..., "--goal", help="What the writer wants from ideation"),
+    audience: str = typer.Option("general readers", "--audience"),
+    persona: list[str] = typer.Option(None, "--persona"),
+    constraint: list[str] = typer.Option(None, "--constraint"),
+    notes: str = typer.Option("", "--notes"),
+):
+    """Create structured idea cards for pre-writing ideation."""
+    cards = build_idea_cards(
+        topic=topic,
+        goal=goal,
+        personas=persona,
+        audience=audience,
+        constraints=constraint,
+        notes=notes,
+    )
+    typer.echo(json.dumps([card.model_dump() for card in cards], indent=2))
 
 
 @app.command("chat")

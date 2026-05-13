@@ -1,6 +1,8 @@
 from pathlib import Path
 
 from mop_divpo.inference.generate import dry_run_generate
+from mop_divpo.training.push_data import _normalize
+from mop_divpo.training.train_sft import _format_records
 from mop_divpo.training.commands import build_dpo_command, build_sft_command
 
 
@@ -31,3 +33,45 @@ def test_dry_run_generate_returns_persona_labeled_outputs():
     outputs = dry_run_generate("Invent essay ideas about cities.", personas=["minimalist", "contrarian"])
     assert [item["persona"] for item in outputs] == ["minimalist", "contrarian"]
     assert all("response" in item for item in outputs)
+
+
+def test_format_records_accepts_coauthor_message_rows():
+    class StubTokenizer:
+        def apply_chat_template(self, messages, tokenize=False, add_generation_prompt=False):
+            assert messages[0]["role"] == "system"
+            assert messages[-1]["role"] == "assistant"
+            return "formatted-chat"
+
+    records = [
+        {
+            "messages": [
+                {"role": "system", "content": "System"},
+                {"role": "user", "content": "Brief"},
+                {"role": "assistant", "content": "Idea card"},
+            ]
+        }
+    ]
+
+    formatted = _format_records(records, StubTokenizer(), "fallback")
+
+    assert formatted == [{"text": "formatted-chat"}]
+
+
+def test_push_data_normalize_preserves_coauthor_messages():
+    rows = _normalize(
+        [
+            {
+                "id": "coauthor-1",
+                "persona": "contrarian",
+                "source": "curated_seed",
+                "operation": "challenge_thesis",
+                "brief": {"topic": "AI", "goal": "find angle"},
+                "card": {"idea": "Invert the premise."},
+                "messages": [{"role": "user", "content": "Topic: AI"}],
+            }
+        ]
+    )
+
+    assert rows[0]["messages"] == [{"role": "user", "content": "Topic: AI"}]
+    assert rows[0]["operation"] == "challenge_thesis"
+    assert rows[0]["brief"]["topic"] == "AI"

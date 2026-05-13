@@ -5,7 +5,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
+
+try:
+    from sentence_transformers import SentenceTransformer
+except ModuleNotFoundError:
+    SentenceTransformer = None  # type: ignore[assignment]
 
 
 @dataclass
@@ -29,6 +33,11 @@ class CorpusRetriever:
         embedding_model: str,
     ) -> None:
         self._docs = docs
+        if SentenceTransformer is None:
+            raise ModuleNotFoundError(
+                "sentence_transformers is required for CorpusRetriever. "
+                "Install project dependencies with `pip install -e .`."
+            )
         self._model = SentenceTransformer(embedding_model)
 
         if len(docs) > 0:
@@ -82,6 +91,11 @@ class CorpusRetriever:
                 "Ensure *.jsonl files exist with 'prompt' fields."
             )
 
+        if SentenceTransformer is None:
+            raise ModuleNotFoundError(
+                "sentence_transformers is required to build a CorpusRetriever. "
+                "Install project dependencies with `pip install -e .`."
+            )
         model = SentenceTransformer(embedding_model)
         embeddings: np.ndarray = model.encode(
             prompts, show_progress_bar=False, convert_to_numpy=True

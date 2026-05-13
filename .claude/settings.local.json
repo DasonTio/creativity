@@ -22,7 +22,23 @@
       "Bash(git remote *)",
       "Bash(git push *)",
       "Bash(git fetch *)",
-      "Bash(git pull *)"
+      "Bash(git pull *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git log *)",
+      "Bash(git status)",
+      "Bash(git branch)",
+      "Bash(git diff *)",
+      "Bash(python3 -m pytest tests/test_output_parser.py -v)",
+      "Bash(env)",
+      "Bash(ls /opt/homebrew/bin/ | head -10)",
+      "Bash(ls /opt/anaconda3/bin/ | grep python)",
+      "Bash(ls /usr/bin/ | grep python)",
+      "Bash(git merge *)",
+      "Bash(python -c \"import torch; print\\('cuda:', torch.cuda.is_available\\(\\)\\); print\\('mps:', torch.backends.mps.is_available\\(\\)\\); print\\('device count:', torch.cuda.device_count\\(\\) if torch.cuda.is_available\\(\\) else 'n/a'\\)\")",
+      "Bash(python -c \"import sys; sys.path.insert\\(0, 'src'\\); from peft import LoraConfig; from trl import SFTTrainer; from transformers import AutoModelForCausalLM; print\\('deps OK'\\)\")",
+      "Bash(python -c \"from peft import LoraConfig; from trl import SFTTrainer; print\\('deps OK'\\)\")"
     ]
   }
 }
