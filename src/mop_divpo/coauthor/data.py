@@ -358,40 +358,41 @@ def _records_for_all_personas(
 
 
 def _external_card(persona: str, topic: str) -> IdeaCard:
+    short = topic[:120]
     if persona == "contrarian":
         return IdeaCard(
             persona="contrarian",
             operation="challenge_thesis",
-            diagnosis="The source material presents a frame that may be too easy to accept.",
-            idea=f"Challenge the hidden assumption in: {topic[:150]}",
-            rationale="Contrarian co-authoring helps the writer avoid accepting the first available framing.",
-            next_step="State the obvious thesis, then write its strongest inverse.",
+            diagnosis=f"The dominant framing of '{short}' accepts a premise the writer has not tested.",
+            idea=f"Invert the expected benefit: argue that '{short}' creates the opposite of what it promises when taken to its logical conclusion.",
+            rationale="Exposing the hidden cost of the dominant position gives the writer a sharper, less predictable thesis.",
+            next_step="Write the common claim in one sentence, then write its strongest counter-claim using evidence that already exists.",
         )
     if persona == "cross_domain_analogist":
         return IdeaCard(
             persona="cross_domain_analogist",
             operation="transfer_analogy",
-            diagnosis="The writer needs a transferable structure rather than a direct answer.",
-            idea=f"Map this topic to an ecosystem: {topic[:150]}",
-            rationale="A distant analogy gives the writer a scaffold for generating non-obvious directions.",
-            next_step="List three ecosystem roles and translate them back into the writing topic.",
+            diagnosis=f"'{short}' is structurally similar to problems solved in biology and materials science through adaptation under constraint.",
+            idea=f"Use evolutionary niche differentiation as the source analogy: '{short}' works like species carving out distinct roles in a shared ecosystem rather than competing head-on.",
+            rationale="A biological analogy gives the writer a reusable mechanism — niche, pressure, adaptation — instead of a surface comparison.",
+            next_step="Map three ecosystem pressures to three forces in the topic, then describe what 'niche' the writer's argument occupies.",
         )
     if persona == "systems_thinker":
         return IdeaCard(
             persona="systems_thinker",
             operation="map_system",
-            diagnosis="The source material can be treated as a system of incentives, constraints, and feedback.",
-            idea=f"Find the loop that keeps this situation stable: {topic[:150]}",
-            rationale="Systems co-authoring turns a topic into causal structure the writer can organize.",
-            next_step="Name one reinforcing loop, one balancing loop, and one leverage point.",
+            diagnosis=f"'{short}' persists because a feedback loop rewards the current state even when participants want change.",
+            idea=f"Identify the reinforcing loop: in '{short}', each attempt to improve the situation strengthens the condition that makes improvement difficult.",
+            rationale="A feedback diagnosis moves the essay from blame to mechanism, giving the writer a leverage point argument.",
+            next_step="Draw the loop: name the reinforcing cycle, name one balancing force that fails, name one intervention that breaks the cycle.",
         )
     return IdeaCard(
         persona="minimalist",
         operation="distill_core",
-        diagnosis="The source material risks becoming too broad for a usable first draft.",
-        idea=f"Reduce the topic to one concrete scene or image: {topic[:150]}",
-        rationale="Minimalist co-authoring protects specificity and writer ownership.",
-        next_step="Write one paragraph using only the concrete scene, with no abstract explanation.",
+        diagnosis=f"'{short}' is carrying too many claims at once — policy, emotion, history, and prescription competing in the same paragraph.",
+        idea=f"Strip '{short}' to one moment a reader can picture: the essay earns its abstraction only after that image has done its work.",
+        rationale="A single load-bearing scene forces the writer to commit to specificity before expanding, which protects against vague generality.",
+        next_step="Write five sentences about one concrete moment related to this topic using no abstract nouns — then use that scene to open the essay.",
     )
 
 

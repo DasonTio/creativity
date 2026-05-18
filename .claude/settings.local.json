@@ -38,7 +38,8 @@
       "Bash(git merge *)",
       "Bash(python -c \"import torch; print\\('cuda:', torch.cuda.is_available\\(\\)\\); print\\('mps:', torch.backends.mps.is_available\\(\\)\\); print\\('device count:', torch.cuda.device_count\\(\\) if torch.cuda.is_available\\(\\) else 'n/a'\\)\")",
       "Bash(python -c \"import sys; sys.path.insert\\(0, 'src'\\); from peft import LoraConfig; from trl import SFTTrainer; from transformers import AutoModelForCausalLM; print\\('deps OK'\\)\")",
-      "Bash(python -c \"from peft import LoraConfig; from trl import SFTTrainer; print\\('deps OK'\\)\")"
+      "Bash(python -c \"from peft import LoraConfig; from trl import SFTTrainer; print\\('deps OK'\\)\")",
+      "Bash(mkdir -p /Users/dasontiovino/Documents/Programming/Python/llm/creativity/scripts)"
     ]
   }
 }

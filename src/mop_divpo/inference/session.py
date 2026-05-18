@@ -50,6 +50,7 @@ def generate_turn(
     user_message: str,
     retriever: CorpusRetriever | None = None,
     max_new_tokens: int = 256,
+    adapter_path: str | None = None,
 ) -> tuple[str, PersonaSession]:
     """Generate one conversational turn and update session history.
 
@@ -58,11 +59,11 @@ def generate_turn(
     2. On first turn only, append PRIOR ART block if retriever is provided.
     3. Add user_message to session history.
     4. Build full messages list (system + history).
-    5. Load model + tokenizer, apply chat template, generate.
+    5. Load model + tokenizer (with optional local LoRA adapter), apply chat template, generate.
     6. Decode response, add to session history.
     7. Return (response, session).
     """
-    from mop_divpo.inference.generate import _device, _load
+    from mop_divpo.inference.generate import _device, _load, _load_with_adapter
 
     # 1. Build system content
     system_content = describe_persona(session.persona)
@@ -80,7 +81,10 @@ def generate_turn(
     messages = [{"role": "system", "content": system_content}] + session.to_messages()
 
     # 5. Load model + tokenizer
-    tokenizer, model = _load()
+    if adapter_path is not None:
+        tokenizer, model = _load_with_adapter(adapter_path)
+    else:
+        tokenizer, model = _load()
     device = _device()
 
     # 6. Apply chat template and generate

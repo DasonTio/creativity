@@ -173,6 +173,7 @@ def ideate(
 @app.command("chat")
 def chat(
     persona: str = typer.Option("contrarian", "--persona", help="Persona to use as writing partner"),
+    adapter_dir: Optional[Path] = typer.Option(None, "--adapter-dir", help="Path to unzipped coauthor_adapters folder"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Skip model loading; use stub responses"),
     max_new_tokens: int = typer.Option(256, "--max-new-tokens"),
 ):
@@ -186,8 +187,21 @@ def chat(
         typer.echo(str(e), err=True)
         raise typer.Exit(1)
 
+    adapter_path: Optional[str] = None
+    if adapter_dir is not None:
+        resolved = adapter_dir / validated
+        if not resolved.exists():
+            typer.echo(f"Error: adapter not found at {resolved}", err=True)
+            raise typer.Exit(1)
+        adapter_path = str(resolved)
+        typer.echo(f"[adapter] loading from {adapter_path}")
+
     session = PersonaSession(persona=validated)
-    fn = dry_run_generate_turn if dry_run else generate_turn
+
+    def _generate(s, msg, **kw):
+        return generate_turn(s, msg, adapter_path=adapter_path, **kw)
+
+    fn = dry_run_generate_turn if dry_run else _generate
 
     typer.echo(f"[co-author:{validated}] Type your message. Ctrl+C or empty line to quit.\n")
     while True:

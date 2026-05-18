@@ -3,6 +3,7 @@ Name: mop-divpo
 Version: 0.1.0
 Summary: Mixture of Persona + Diverse Preference Optimization prototype
 Requires-Python: >=3.10
+License-File: LICENSE
 Requires-Dist: datasets>=2.19
 Requires-Dist: nltk>=3.8
 Requires-Dist: numpy>=1.26
@@ -17,3 +18,4 @@ Requires-Dist: trl>=0.9
 Requires-Dist: typer>=0.12
 Provides-Extra: dev
 Requires-Dist: pytest>=8.2; extra == "dev"
+Dynamic: license-file
